@@ -53,7 +53,7 @@ export default function StaffPage() {
                 <div className="font-semibold">{s.nama}</div>
                 <div className="text-xs text-muted-foreground">{s.posisi}{s.nip ? ' · ' + s.nip : ''}</div>
               </div>
-              <span className={\`text-xs px-2 py-0.5 rounded-full \${s.aktif ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}\`}>{s.aktif ? 'Aktif' : 'Nonaktif'}</span>
+              <span className={`text-xs px-2 py-0.5 rounded-full ${s.aktif ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{s.aktif ? 'Aktif' : 'Nonaktif'}</span>
             </div>
           ))}
           {staff.length === 0 && <p className="text-center text-muted-foreground py-8">Belum ada staff</p>}

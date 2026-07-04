@@ -64,7 +64,7 @@ export default function WahanaPage() {
                 <div className="text-xs text-muted-foreground">Kapasitas {w.kapasitas} · {w.durasiMenit} menit{w.hargaTiket ? ` · Rp${w.hargaTiket.toLocaleString()}` : ''}</div>
               </div>
               <div className="flex items-center gap-2">
-                <span className={\`text-xs px-2 py-0.5 rounded-full \${w.status === 'AKTIF' ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300'}\`}>{w.status}</span>
+                <span className={`text-xs px-2 py-0.5 rounded-full ${w.status === 'AKTIF' ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300'}`}>{w.status}</span>
                 {isAdmin && (
                   <>
                     <button onClick={() => toggleStatus(w.id, w.status)} className="text-xs px-2 py-1 border rounded-lg hover:bg-muted">Toggle</button>

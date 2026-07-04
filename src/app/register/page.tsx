@@ -1,7 +1,6 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import bcrypt from 'bcryptjs'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -51,6 +50,9 @@ export default function RegisterPage() {
         <p className="text-center text-sm text-muted-foreground mt-4">
           Sudah punya akun? <a href="/login" className="text-primary underline">Masuk</a>
         </p>
+        <div className="mt-4 text-center">
+          <a href="/" className="text-sm text-muted-foreground underline">← Kembali</a>
+        </div>
       </div>
     </div>
   )

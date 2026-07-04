@@ -46,7 +46,7 @@ export default function AntrianPage() {
                 <div className="text-xs text-muted-foreground">{a.wahana?.nama} · Estimasi {a.estimasi} menit</div>
               </div>
               <div className="flex items-center gap-2">
-                <span className={\`text-xs px-2 py-0.5 rounded-full \${a.status === 'MENUNGGU' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}\`}>{a.status}</span>
+                <span className={`text-xs px-2 py-0.5 rounded-full ${a.status === 'MENUNGGU' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>{a.status}</span>
                 {isAdmin && a.status === 'MENUNGGU' && <button onClick={() => panggil(a.id)} className="text-xs px-2 py-1 border rounded-lg hover:bg-muted">Panggil</button>}
                 {isAdmin && a.status !== 'SELESAI' && <button onClick={() => selesai(a.id)} className="text-xs px-2 py-1 border rounded-lg text-green-600 hover:bg-muted">✓</button>}
               </div>

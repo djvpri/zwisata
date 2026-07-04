@@ -23,7 +23,7 @@ export default function PesananPage() {
             <div key={p.id} className="border rounded-xl p-4 bg-card">
               <div className="flex items-center justify-between mb-1">
                 <span className="font-semibold">#{p.kode}</span>
-                <span className={\`text-xs px-2 py-0.5 rounded-full \${statusColor(p.status)}\`}>{p.status}</span>
+                <span className={`text-xs px-2 py-0.5 rounded-full ${statusColor(p.status)}`}>{p.status}</span>
               </div>
               <div className="text-sm text-muted-foreground">{p.namaPemesan} · {new Date(p.tglKunjungan).toLocaleDateString('id-ID')}</div>
               <div className="text-sm font-semibold mt-1">Rp{p.total.toLocaleString()} · {p.items?.length || 0} tiket</div>
