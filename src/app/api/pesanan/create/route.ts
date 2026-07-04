@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
       items: {
         create: items.map(i => {
           const t = tiketMap[i.tiketId]!
-          return { tiketId: i.tiketId, qty: i.qty, harga: t.harga, subtotal: t.harga * i.qty }
+          return { tiketId: i.tiketId, qty: i.qty, harga: t.harga ?? 0, subtotal: (t.harga ?? 0) * i.qty }
         }),
       },
     },
