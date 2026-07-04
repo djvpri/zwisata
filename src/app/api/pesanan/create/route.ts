@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
   const items = body.items as { tiketId: string; qty: number }[]
   const tiketIds = items.map(i => i.tiketId)
   const tiketList = await prisma.tiket.findMany({ where: { id: { in: tiketIds } } })
-  const tiketMap = new Map(tiketList.map(t => [t.id, t]))
+  const tiketMap = new Map<string, typeof tiketList[0]>(tiketList.map(t => [t.id, t]))
 
   const total = items.reduce((sum, i) => {
     const t = tiketMap.get(i.tiketId)
