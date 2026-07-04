@@ -6,8 +6,8 @@ import { Providers } from './providers'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'ZWisata — Manajemen Wisata',
-  description: 'Sistem manajemen tempat wisata & wahana',
+  title: 'ZWisata — Sistem Membership Taman Wisata',
+  description: 'Tiket, antrian, dan wahana dalam satu sistem. Membership Rp100.000/bulan atau Rp1.000.000/tahun.',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
