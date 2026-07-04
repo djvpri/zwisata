@@ -15,10 +15,11 @@ export async function POST(req: NextRequest) {
   const items = body.items as { tiketId: string; qty: number }[]
   const tiketIds = items.map(i => i.tiketId)
   const tiketList = await prisma.tiket.findMany({ where: { id: { in: tiketIds } } })
-  const tiketMap = new Map<string, typeof tiketList[0]>(tiketList.map(t => [t.id, t]))
+  const tiketMap: Record<string, { id: string; harga: number | null }> = {}
+  for (const t of tiketList) tiketMap[t.id] = { id: t.id, harga: t.harga }
 
   const total = items.reduce((sum, i) => {
-    const t = tiketMap.get(i.tiketId)
+    const t = tiketMap[i.tiketId]
     return sum + (t?.harga || 0) * i.qty
   }, 0)
 
@@ -33,7 +34,7 @@ export async function POST(req: NextRequest) {
       total,
       items: {
         create: items.map(i => {
-          const t = tiketMap.get(i.tiketId)!
+          const t = tiketMap[i.tiketId]!
           return { tiketId: i.tiketId, qty: i.qty, harga: t.harga, subtotal: t.harga * i.qty }
         }),
       },
