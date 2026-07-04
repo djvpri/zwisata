@@ -4,7 +4,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model Account {
@@ -35,18 +34,18 @@ model Session {
 }
 
 model User {
-  id            String     @id @default(cuid())
+  id            String    @id @default(cuid())
   name          String?
-  email         String?    @unique
+  email         String?   @unique
   password      String?
   emailVerified DateTime?
   image         String?
-  role          String     @default("USER")
+  role          String    @default("USER")
   accounts      Account[]
   sessions      Session[]
   pesanan       Pesanan[]
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }
 
 model VerificationToken {
@@ -57,45 +56,22 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-enum StatusWahana {
-  AKTIF
-  MAINTENANCE
-  TUTUP
-}
-
-enum StatusPesanan {
-  MENUNGGU
-  DIBAYAR
-  DIPAKAI
-  SELESAI
-  DIBATALKAN
-}
-
 model Wahana {
-  id            String         @id @default(cuid())
-  nama          String
-  slug          String         @unique
-  deskripsi     String?        @db.Text
-  kapasitas     Int
-  tinggiMin     Int?           @default(0)
-  durasiMenit   Int            @default(5)
-  icon          String         @default("star")
-  warna         String         @default("#3b82f6")
-  status        StatusWahana   @default(AKTIF)
-  hargaTiket    Float?
-  antrian       Antrian[]
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-}
-
-model HargaMusiman {
-  id          String   @id @default(cuid())
-  nama        String
-  tglMulai    DateTime
-  tglSelesai  DateTime
-  multiplier  Float    @default(1.5)
-  aktif       Boolean  @default(true)
-  createdAt   DateTime @default(now())
+  id           String   @id @default(cuid())
+  nama         String
+  slug         String   @unique
+  deskripsi    String?  @db.Text
+  kapasitas    Int
+  tinggiMin    Int?
+  durasiMenit  Int      @default(5)
+  status       String   @default("AKTIF")
+  icon         String   @default("star")
+  warna        String   @default("#3b82f6")
+  hargaTiket   Int?
+  tiket        Tiket[]
+  antrian      Antrian[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model Tiket {
@@ -103,97 +79,64 @@ model Tiket {
   nama        String
   slug        String   @unique
   deskripsi   String?  @db.Text
-  tipe        String   @default("MASUK") // MASUK, WAHANA, COMBO
-  harga       Float
+  tipe        String   @default("MASUK")
+  harga       Int?
   wahanaId    String?
   wahana      Wahana?  @relation(fields: [wahanaId], references: [id])
   kuotaHarian Int?
-  aktif       Boolean  @default(true)
+  pesananItem PesananItem[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
 
 model Pesanan {
-  id              String          @id @default(cuid())
-  kode            String          @unique
+  id              String   @id @default(cuid())
+  kode            String   @unique
   userId          String
-  user            User            @relation(fields: [userId], references: [id])
+  user            User     @relation(fields: [userId], references: [id])
   namaPemesan     String
-  emailPemesan    String?
-  noHpPemesan     String?
+  emailPemesan    String
+  noHpPemesan     String
   tglKunjungan    DateTime
-  status          StatusPesanan   @default(MENUNGGU)
-  total           Float           @default(0)
-  items           DetailPesanan[]
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  total           Int
+  status          String   @default("MENUNGGU")
+  items           PesananItem[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
-model DetailPesanan {
-  id        String  @id @default(cuid())
+model PesananItem {
+  id        String   @id @default(cuid())
   pesananId String
-  pesanan   Pesanan @relation(fields: [pesananId], references: [id], onDelete: Cascade)
+  pesanan   Pesanan  @relation(fields: [pesananId], references: [id], onDelete: Cascade)
   tiketId   String
-  tiket     Tiket   @relation(fields: [tiketId], references: [id])
-  qty       Int     @default(1)
-  harga     Float
-  subtotal  Float
-}
-
-model Pengunjung {
-  id          String     @id @default(cuid())
-  nama        String
-  noHp        String?
-  email       String?
-  usia        Int?
-  asalKota    String?
-  jumlahKunjungan Int    @default(1)
-  terakhir    DateTime   @default(now())
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  tiket     Tiket    @relation(fields: [tiketId], references: [id])
+  qty       Int
+  harga     Int
+  subtotal  Int
 }
 
 model Antrian {
-  id          String       @id @default(cuid())
-  wahanaId    String
-  wahana      Wahana       @relation(fields: [wahanaId], references: [id], onDelete: Cascade)
-  noAntrian   Int
+  id             String   @id @default(cuid())
+  wahanaId       String
+  wahana         Wahana   @relation(fields: [wahanaId], references: [id], onDelete: Cascade)
+  noAntrian      Int
   namaPengunjung String
-  estimasi    Int?         // menit
-  status      String       @default("MENUNGGU") // MENUNGGU, DIPANGGIL, SELESAI
-  createdAt   DateTime     @default(now())
+  status         String   @default("MENUNGGU")
+  estimasi       Int      @default(10)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([wahanaId, noAntrian])
 }
 
 model Staff {
-  id          String   @id @default(cuid())
-  nama        String
-  nip         String?  @unique
-  noHp        String?
-  posisi      String   @default("OPERATOR")
-  aktif       Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model ShiftStaff {
   id        String   @id @default(cuid())
-  staffId   String
-  staff     Staff    @relation(fields: [staffId], references: [id], onDelete: Cascade)
-  wahanaId  String?
-  wahana    Wahana?  @relation(fields: [wahanaId], references: [id])
-  tgl       DateTime
-  jamMulai  DateTime
-  jamSelesai DateTime?
+  nama      String
+  nip       String?  @unique
+  noHp      String?
+  posisi    String   @default("OPERATOR")
+  aktif     Boolean  @default(true)
   createdAt DateTime @default(now())
-}
-
-model ChecklistOperasional {
-  id         String   @id @default(cuid())
-  wahanaId   String
-  wahana     Wahana   @relation(fields: [wahanaId], references: [id], onDelete: Cascade)
-  tipe       String   @default("BUKA") // BUKA, TUTUP
-  items      String?  @db.Jsonb // ["cek mesin","cek sabuk",...]
-  selesai    Boolean  @default(false)
-  ditindakOleh String?
-  createdAt  DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
