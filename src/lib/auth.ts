@@ -79,6 +79,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.id = user.id as string
         token.role = (user as { role?: string }).role ?? 'USER'
+        // Include tenantId from user
+        const u = user as { tenantId?: string | null }
+        if (u.tenantId) token.tenantId = u.tenantId
       }
       return token
     },
@@ -86,6 +89,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (session.user) {
         session.user.id = token.id as string
         session.user.role = token.role as string
+        session.user.tenantId = token.tenantId as string | undefined
       }
       return session
     },
