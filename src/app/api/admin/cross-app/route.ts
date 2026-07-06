@@ -5,6 +5,10 @@ import { randomBytes } from 'crypto'
 
 const SHARED_SECRET = process.env.CROSS_APP_SECRET || ''
 
+function slugify(text: string) {
+  return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'tenant'
+}
+
 function requireAuth(req: NextRequest) {
   const authHeader = req.headers.get('authorization') || ''
   const token = authHeader.replace(/^Bearer\s+/i, '')
@@ -16,11 +20,13 @@ export async function GET(req: NextRequest) {
   try {
     const users = await prisma.user.findMany({
       where: { NOT: { role: 'ADMIN' } },
-      select: { id: true, name: true, email: true, role: true, emailVerified: true },
+      select: { id: true, name: true, email: true, role: true, emailVerified: true, tenantId: true },
       orderBy: { createdAt: 'desc' },
     })
-    // zwisata doesn't use Tenant model — return empty list so ZOne UI hides tenant features
-    return NextResponse.json({ users, tenants: [] })
+    const tenants = await prisma.tenant.findMany({
+      orderBy: { createdAt: 'desc' },
+    })
+    return NextResponse.json({ users, tenants })
   } catch (error) {
     console.error('Cross-app GET error:', error)
     return NextResponse.json({ error: 'Internal error' }, { status: 500 })
@@ -32,11 +38,11 @@ export async function POST(req: NextRequest) {
   try {
     const { action, email, data } = await req.json()
 
-    // --- User actions (supported) ---
+    // --- User actions ---
     if (action === 'list') {
       const users = await prisma.user.findMany({
         where: { NOT: { role: 'ADMIN' } },
-        select: { id: true, name: true, email: true, role: true },
+        select: { id: true, name: true, email: true, role: true, tenantId: true },
         orderBy: { createdAt: 'desc' },
       })
       return NextResponse.json({ users })
@@ -49,7 +55,13 @@ export async function POST(req: NextRequest) {
       const user = await prisma.user.upsert({
         where: { email },
         update: {},
-        create: { email, name: data?.name || email, password: hashed, role: 'USER' },
+        create: {
+          email,
+          name: data?.name || email,
+          password: hashed,
+          role: 'USER',
+          tenantId: data?.tenantId || null,
+        },
       })
       return NextResponse.json({ user, password: data?.password ? undefined : password })
     }
@@ -72,10 +84,49 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true })
     }
 
-    // --- Tenant actions (zwisata = single-tenant, no-op but no error) ---
-    if (action === 'createTenant' || action === 'updatePlan' || action === 'deleteTenant' || 
-        action === 'reactivateTenant' || action === 'moveTenant') {
-      return NextResponse.json({ success: true, notice: 'zwisata is single-tenant; no tenant needed' })
+    if (action === 'moveTenant') {
+      if (!email && !data?.userId) return NextResponse.json({ error: 'Email or userId required' }, { status: 400 })
+      const where = email ? { email } : { id: data.userId }
+      await prisma.user.update({ where, data: { tenantId: data?.tenantId || null } })
+      return NextResponse.json({ success: true })
+    }
+
+    // --- Tenant actions ---
+    if (action === 'createTenant') {
+      if (!data?.name) return NextResponse.json({ error: 'Tenant name required' }, { status: 400 })
+      const slug = slugify(data.name)
+      const tenant = await prisma.tenant.create({
+        data: {
+          name: data.name,
+          slug,
+          plan: data?.plan || 'starter',
+          active: true,
+        },
+      })
+      return NextResponse.json({ tenant })
+    }
+
+    if (action === 'deleteTenant') {
+      const tenantId = data?.tenantId || data?.id
+      if (!tenantId) return NextResponse.json({ error: 'tenantId required' }, { status: 400 })
+      await prisma.tenant.update({ where: { id: tenantId }, data: { active: false } })
+      return NextResponse.json({ success: true })
+    }
+
+    if (action === 'reactivateTenant') {
+      const tenantId = data?.tenantId || data?.id
+      if (!tenantId) return NextResponse.json({ error: 'tenantId required' }, { status: 400 })
+      await prisma.tenant.update({ where: { id: tenantId }, data: { active: true } })
+      return NextResponse.json({ success: true })
+    }
+
+    if (action === 'updatePlan') {
+      const tenantId = data?.tenantId || data?.id
+      if (!tenantId) return NextResponse.json({ error: 'tenantId required' }, { status: 400 })
+      const update: any = { plan: data?.plan || 'starter' }
+      if (data?.planExpires) update.expiresAt = new Date(data.planExpires)
+      await prisma.tenant.update({ where: { id: tenantId }, data: update })
+      return NextResponse.json({ success: true })
     }
 
     return NextResponse.json({ error: `Unknown action: ${action}` }, { status: 400 })
