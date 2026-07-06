@@ -8,8 +8,7 @@ const SHARED_SECRET = process.env.CROSS_APP_SECRET || ''
 function requireAuth(req: NextRequest) {
   const authHeader = req.headers.get('authorization') || ''
   const token = authHeader.replace(/^Bearer\s+/i, '')
-  if (token !== SHARED_SECRET) return false
-  return true
+  return token === SHARED_SECRET
 }
 
 export async function GET(req: NextRequest) {
@@ -20,7 +19,8 @@ export async function GET(req: NextRequest) {
       select: { id: true, name: true, email: true, role: true, emailVerified: true },
       orderBy: { createdAt: 'desc' },
     })
-    return NextResponse.json({ users })
+    // zwisata doesn't use Tenant model — return empty list so ZOne UI hides tenant features
+    return NextResponse.json({ users, tenants: [] })
   } catch (error) {
     console.error('Cross-app GET error:', error)
     return NextResponse.json({ error: 'Internal error' }, { status: 500 })
@@ -32,6 +32,7 @@ export async function POST(req: NextRequest) {
   try {
     const { action, email, data } = await req.json()
 
+    // --- User actions (supported) ---
     if (action === 'list') {
       const users = await prisma.user.findMany({
         where: { NOT: { role: 'ADMIN' } },
@@ -55,8 +56,26 @@ export async function POST(req: NextRequest) {
 
     if (action === 'delete') {
       if (!email) return NextResponse.json({ error: 'Email required' }, { status: 400 })
-      await prisma.user.deleteMany({ where: { email } })
+      await prisma.user.updateMany({ where: { email }, data: { role: 'DISABLED' } })
       return NextResponse.json({ success: true })
+    }
+
+    if (action === 'reactivate') {
+      if (!email) return NextResponse.json({ error: 'Email required' }, { status: 400 })
+      await prisma.user.updateMany({ where: { email }, data: { role: 'USER' } })
+      return NextResponse.json({ success: true })
+    }
+
+    if (action === 'updateRole') {
+      if (!email) return NextResponse.json({ error: 'Email required' }, { status: 400 })
+      await prisma.user.updateMany({ where: { email }, data: { role: data?.role || 'USER' } })
+      return NextResponse.json({ success: true })
+    }
+
+    // --- Tenant actions (zwisata = single-tenant, no-op but no error) ---
+    if (action === 'createTenant' || action === 'updatePlan' || action === 'deleteTenant' || 
+        action === 'reactivateTenant' || action === 'moveTenant') {
+      return NextResponse.json({ success: true, notice: 'zwisata is single-tenant; no tenant needed' })
     }
 
     return NextResponse.json({ error: `Unknown action: ${action}` }, { status: 400 })
