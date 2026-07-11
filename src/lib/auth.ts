@@ -33,7 +33,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const valid = await bcrypt.compare(password, user.password || '')
         if (!valid) return null
 
-        return { id: user.id, name: user.name, email: user.email, role: user.role }
+        return { id: user.id, name: user.name, email: user.email, role: user.role, tenantId: user.tenantId }
       },
     }),
     // Login SSO dari Z One: token = JWT yang ditandatangani Z One
@@ -70,10 +70,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           })
         }
 
-        return { id: user.id, name: user.name, email: user.email, role: user.role }
-      },
-    }),
-  ],
+        return { id: user.id, name: user.name, email: user.email, role: user.role, tenantId: user.tenantId }  ],
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
