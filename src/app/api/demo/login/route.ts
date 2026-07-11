@@ -27,8 +27,12 @@ export async function GET(req: NextRequest) {
     .setExpirationTime('7d')
     .sign(secret)
 
-  // Set NextAuth session cookie and redirect
-  const res = NextResponse.redirect(new URL('/dashboard', req.url))
+  // Set NextAuth session cookie and redirect to /dashboard
+  const dashboardUrl = new URL('/dashboard', req.headers.get('x-forwarded-proto') === 'https'
+    ? `https://${req.headers.get('x-forwarded-host') || req.headers.get('host')}`
+    : `http://${req.headers.get('host')}`)
+  
+  const res = NextResponse.redirect(dashboardUrl)
   res.cookies.set('next-auth.session-token', token, {
     httpOnly: true,
     secure: true,
