@@ -14,6 +14,8 @@ model Tenant {
   active    Boolean  @default(true)
   expiresAt DateTime?
   quota     Int?
+  isDemo         Boolean   @default(false)
+  demoExpiresAt  DateTime?
 
   users     User[]
   wahanas   Wahana[]
