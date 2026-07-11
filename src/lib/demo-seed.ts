@@ -90,7 +90,7 @@ export async function seedDataDemo(tenantId: string) {
           totalHarga,
           status: i < 3 ? 'CONFIRMED' : 'PENDING',
           items: {
-            create: [{ tiketId: tiketMasuk.id, jumlah: p.jumlah, harga: tiketMasuk.harga! }],
+            create: [{ tiketId: tiketMasuk.id, qty: p.jumlah, harga: tiketMasuk.harga!, subtotal: tiketMasuk.harga! * p.jumlah }],
           },
         },
       })
