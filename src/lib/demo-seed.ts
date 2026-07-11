@@ -87,7 +87,7 @@ export async function seedDataDemo(tenantId: string) {
           emailPemesan: p.email,
           noHpPemesan: p.noHp,
           tglKunjungan: randomDate(7),
-          totalHarga,
+          total: totalHarga,
           status: i < 3 ? 'CONFIRMED' : 'PENDING',
           items: {
             create: [{ tiketId: tiketMasuk.id, qty: p.jumlah, harga: tiketMasuk.harga!, subtotal: tiketMasuk.harga! * p.jumlah }],
