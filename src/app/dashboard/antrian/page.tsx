@@ -29,7 +29,7 @@ export default function AntrianPage() {
   return (
     <div className="min-h-screen">
       <header className="border-b px-4 py-3 bg-card flex items-center justify-between sticky top-0 z-20">
-        <a href="/dashboard" className="flex items-center gap-2 font-bold text-lg"><span>🎢</span> ZWisata</a>
+        <a href="/dashboard" className="flex items-center gap-2 font-bold text-lg"><i className="bi bi-signpost-split"></i> ZWisata</a>
         <span className="text-sm text-muted-foreground">Antrian</span>
       </header>
       <main className="max-w-4xl mx-auto px-4 py-6">

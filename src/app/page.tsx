@@ -69,7 +69,7 @@ export default function HomePage() {
       <header className="px-4 sm:px-6">
         <div className="max-w-6xl mx-auto flex items-center justify-between py-5 border-b border-garis">
           <div className={`${display.className} flex items-center gap-2 font-bold text-xl tracking-tight`}>
-            <span aria-hidden>🎢</span> ZWisata
+            <i className="bi bi-signpost-split" aria-hidden></i> ZWisata
           </div>
           <nav className="flex items-center gap-2 text-sm">
             <Link

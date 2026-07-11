@@ -24,7 +24,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-6">
-          <div className="text-3xl mb-2">🎢</div>
+          <i className="bi bi-signpost-split text-3xl mb-2"></i>
           <h1 className="text-2xl font-bold">ZWisata</h1>
           <p className="text-muted-foreground text-sm">Masuk ke dashboard</p>
         </div>
