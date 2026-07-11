@@ -10,7 +10,7 @@ export default function WahanaPage() {
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ nama: '', deskripsi: '', kapasitas: 20, durasiMenit: 5, hargaTiket: '' })
 
-  const load = () => fetch('/api/wahana').then(r => r.json()).then(setWahana)
+  const load = () => fetch('/api/wahana').then(r => r.json()).then(d => setWahana(Array.isArray(d) ? d : []))
   useEffect(() => { load() }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
-import { requireAdmin } from '@/lib/guard'
+import { requireSession, requireAdmin } from '@/lib/guard'
 
 export async function GET(req: NextRequest) {
-  const session = await requireAdmin()
-  if (!session) return NextResponse.json({ error: 'Hanya admin' }, { status: 403 })
+  const session = await requireSession()
+  if (!session) return NextResponse.json({ error: 'Belum login' }, { status: 401 })
 
   const tenantId = session.user.tenantId
   const where = tenantId ? { tenantId } : {}
