@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
         await seedDataDemo(d.id)
         await prisma.tenant.update({
           where: { id: d.id },
-          set: { demoExpiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000) }, // 2 hours
+          data: { demoExpiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000) }, // 2 hours
         })
         reset++
       }
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
       await seedDataDemo(demo.id)
       await prisma.tenant.update({
         where: { id: demo.id },
-        set: { demoExpiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000) },
+        data: { demoExpiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000) },
       })
       reset++
     }
