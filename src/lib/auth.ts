@@ -70,7 +70,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           })
         }
 
-        return { id: user.id, name: user.name, email: user.email, role: user.role, tenantId: user.tenantId }  ],
+        return { id: user.id, name: user.name, email: user.email, role: user.role, tenantId: user.tenantId }
+      },
+    }),
+  ],
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
