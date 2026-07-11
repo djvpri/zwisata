@@ -16,14 +16,15 @@ export async function POST(req: NextRequest) {
       create: { name: 'Demo Wisata', slug: 'demo', isDemo: true, plan: 'starter' },
     })
 
+    // Upsert + ensure tenantId is set
     const demoUser = await prisma.user.upsert({
       where: { email: 'demo@zomet.my.id' },
-      update: {},
+      update: { tenantId: demoTenant.id, emailVerified: new Date() },
       create: {
         name: 'Admin Demo',
         email: 'demo@zomet.my.id',
-        password: '$2b$10$demo',
         role: 'ADMIN',
+        emailVerified: new Date(),
         tenantId: demoTenant.id,
       },
     })

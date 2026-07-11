@@ -20,6 +20,13 @@ export default function LoginPage() {
     setLoading(false)
   }
 
+  const handleDemo = async () => {
+    setLoading(true)
+    const res = await signIn('credentials', { email: 'demo@zomet.my.id', password: 'demo', redirect: false })
+    if (res?.ok) router.push('/dashboard')
+    setLoading(false)
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
@@ -39,6 +46,16 @@ export default function LoginPage() {
             {loading ? 'Memproses...' : 'Masuk'}
           </button>
         </form>
+        <div className="my-4 flex items-center gap-3">
+          <div className="flex-1 h-px bg-border"></div>
+          <span className="text-xs text-muted-foreground">atau</span>
+          <div className="flex-1 h-px bg-border"></div>
+        </div>
+        <button onClick={handleDemo} disabled={loading}
+          className="w-full py-3 border border-dashed rounded-xl font-semibold hover:bg-accent transition disabled:opacity-50">
+          <i className="bi bi-play-circle mr-2"></i>
+          Coba Demo
+        </button>
         <p className="text-center text-sm text-muted-foreground mt-4">
           Belum punya akun? <a href="/register" className="text-primary underline">Daftar</a>
         </p>
