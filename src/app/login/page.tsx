@@ -20,11 +20,8 @@ export default function LoginPage() {
     setLoading(false)
   }
 
-  const handleDemo = async () => {
-    setLoading(true)
-    const res = await signIn('credentials', { email: 'demo@zomet.my.id', password: 'demo', redirect: false })
-    if (res?.ok) router.push('/dashboard')
-    setLoading(false)
+  const handleDemo = () => {
+    window.location.href = '/api/demo/login'
   }
 
   return (
