@@ -3,6 +3,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useCallback } from 'react'
 
 const MENU = [
   { href: '/dashboard/wahana', label: 'Wahana', desc: 'Kelola wahana', icon: 'bi-signpost-split', color: 'text-teal-600' },
@@ -16,19 +17,43 @@ export default function Dashboard() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [stats, setStats] = useState({ wahana: 0, tiket: 0, pesanan: 0 })
+  const [seeding, setSeeding] = useState(false)
+  const [seedMsg, setSeedMsg] = useState('')
+
+  const loadStats = useCallback(() => {
+    Promise.all([
+      fetch('/api/wahana').then(r => r.json()),
+      fetch('/api/tiket').then(r => r.json()),
+      fetch('/api/pesanan').then(r => r.json()),
+    ]).then(([w, t, p]) => {
+      setStats({ wahana: Array.isArray(w) ? w.length : 0, tiket: Array.isArray(t) ? t.length : 0, pesanan: Array.isArray(p) ? p.length : 0 })
+    })
+  }, [])
 
   useEffect(() => {
     if (status === 'unauthenticated') router.push('/login')
-    if (status === 'authenticated') {
-      Promise.all([
-        fetch('/api/wahana').then(r => r.json()),
-        fetch('/api/tiket').then(r => r.json()),
-        fetch('/api/pesanan').then(r => r.json()),
-      ]).then(([w, t, p]) => {
-        setStats({ wahana: Array.isArray(w) ? w.length : 0, tiket: Array.isArray(t) ? t.length : 0, pesanan: Array.isArray(p) ? p.length : 0 })
-      })
+    if (status === 'authenticated') loadStats()
+  }, [status, router, loadStats])
+
+  const handleSeed = async () => {
+    if (!confirm('Ini akan menghapus semua data (wahana, tiket, staff, pesanan) dan mengisinya ulang dengan data demo. Lanjutkan?')) return
+    setSeeding(true)
+    setSeedMsg('')
+    try {
+      const res = await fetch('/api/demo/seed-tenant', { method: 'POST' })
+      const data = await res.json()
+      if (data.success) {
+        setSeedMsg(`Berhasil: ${data.wahanas} wahana, ${data.tikets} tiket, ${data.pesanans} pesanan`)
+        loadStats()
+      } else {
+        setSeedMsg(`Gagal: ${data.error}`)
+      }
+    } catch {
+      setSeedMsg('Terjadi kesalahan')
+    } finally {
+      setSeeding(false)
     }
-  }, [status, router])
+  }
 
   if (status !== 'authenticated') return null
 
@@ -78,6 +103,25 @@ export default function Dashboard() {
           </Link>
         ))}
       </div>
+
+      {/* Demo seed */}
+      {user.role === 'ADMIN' && (
+        <div className="mt-8 pt-6 border-t border-dashed">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Data Demo</p>
+          <p className="text-xs text-muted-foreground mb-3">Isi ulang dengan data contoh untuk testing laporan dan fitur lainnya. <span className="text-amber-600 font-medium">Data lama akan dihapus.</span></p>
+          <button
+            onClick={handleSeed}
+            disabled={seeding}
+            className="px-4 py-2 rounded-lg bg-muted hover:bg-muted-foreground/10 border text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
+          >
+            <i className={`bi ${seeding ? 'bi-arrow-repeat animate-spin' : 'bi-database-fill-gear'} text-sm`} />
+            {seeding ? 'Mengisi data...' : 'Isi Data Demo'}
+          </button>
+          {seedMsg && (
+            <p className={`text-xs mt-2 ${seedMsg.startsWith('Berhasil') ? 'text-teal-600' : 'text-red-500'}`}>{seedMsg}</p>
+          )}
+        </div>
+      )}
     </div>
   )
 }

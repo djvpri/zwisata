@@ -23,17 +23,25 @@ const DEMO_STAFF = [
 ]
 
 const DEMO_PEMESAN = [
-  { nama: 'Rudi Hermawan', email: 'rudi@demo.com', noHp: '081111111111', jumlah: 3 },
-  { nama: 'Dewi Lestari', email: 'dewi@demo.com', noHp: '082222222222', jumlah: 4 },
-  { nama: 'Ahmad Fauzi', email: 'ahmad@demo.com', noHp: '083333333333', jumlah: 2 },
-  { nama: 'Maya Sari', email: 'maya@demo.com', noHp: '084444444444', jumlah: 5 },
+  { nama: 'Rudi Hermawan', email: 'rudi@demo.com', noHp: '081111111111' },
+  { nama: 'Dewi Lestari', email: 'dewi@demo.com', noHp: '082222222222' },
+  { nama: 'Ahmad Fauzi', email: 'ahmad@demo.com', noHp: '083333333333' },
+  { nama: 'Maya Sari', email: 'maya@demo.com', noHp: '084444444444' },
+  { nama: 'Bima Prakasa', email: 'bima@demo.com', noHp: '085555555555' },
+  { nama: 'Sari Indah', email: 'sari@demo.com', noHp: '086666666666' },
+  { nama: 'Hendra Wijaya', email: 'hendra@demo.com', noHp: '087777777777' },
+  { nama: 'Rina Kusuma', email: 'rina@demo.com', noHp: '088888888888' },
+  { nama: 'Doni Saputra', email: 'doni@demo.com', noHp: '089999999999' },
+  { nama: 'Lina Marlina', email: 'lina@demo.com', noHp: '081100001111' },
+  { nama: 'Agus Setiawan', email: 'agus@demo.com', noHp: '081200002222' },
+  { nama: 'Fitri Handayani', email: 'fitri@demo.com', noHp: '081300003333' },
 ]
 
 // === SEED FUNCTIONS ===
 
-function randomDate(daysBack: number): Date {
+function dateOffset(daysBack: number): Date {
   const d = new Date()
-  d.setDate(d.getDate() - Math.floor(Math.random() * daysBack))
+  d.setDate(d.getDate() - daysBack)
   d.setHours(8 + Math.floor(Math.random() * 10), Math.floor(Math.random() * 60), 0, 0)
   return d
 }
@@ -73,25 +81,49 @@ export async function seedDataDemo(tenantId: string) {
     },
   })
 
-  // Pesanan
   const tiketMasuk = tikets.find(t => t.tipe === 'MASUK')!
+  const tiketRC = tikets.find(t => t.slug === 'tiket-rc')!
+  const tiketKR = tikets.find(t => t.slug === 'tiket-kr')!
+  const tiketPaket = tikets.find(t => t.tipe === 'PAKET')!
+
+  // Orders spread over last 28 days, varied statuses and tiket types
+  const PESANAN_DEMO = [
+    { i: 0, daysBack: 27, status: 'SELESAI', qty: 3, tiket: tiketMasuk, extra: null },
+    { i: 1, daysBack: 24, status: 'SELESAI', qty: 2, tiket: tiketPaket, extra: null },
+    { i: 2, daysBack: 21, status: 'SELESAI', qty: 4, tiket: tiketMasuk, extra: tiketRC },
+    { i: 3, daysBack: 18, status: 'DIPAKAI', qty: 5, tiket: tiketMasuk, extra: null },
+    { i: 4, daysBack: 15, status: 'SELESAI', qty: 2, tiket: tiketPaket, extra: null },
+    { i: 5, daysBack: 12, status: 'SELESAI', qty: 3, tiket: tiketMasuk, extra: tiketKR },
+    { i: 6, daysBack: 10, status: 'DIBAYAR', qty: 4, tiket: tiketMasuk, extra: null },
+    { i: 7, daysBack: 7, status: 'SELESAI', qty: 2, tiket: tiketPaket, extra: tiketRC },
+    { i: 8, daysBack: 5, status: 'DIBAYAR', qty: 3, tiket: tiketMasuk, extra: null },
+    { i: 9, daysBack: 4, status: 'SELESAI', qty: 5, tiket: tiketMasuk, extra: tiketKR },
+    { i: 10, daysBack: 2, status: 'DIBAYAR', qty: 2, tiket: tiketPaket, extra: null },
+    { i: 11, daysBack: 0, status: 'MENUNGGU', qty: 4, tiket: tiketMasuk, extra: null },
+  ]
+
   const pesanans = await Promise.all(
-    DEMO_PEMESAN.map((p, i) => {
-      const totalHarga = tiketMasuk.harga! * p.jumlah
+    PESANAN_DEMO.map(p => {
+      const pemesan = DEMO_PEMESAN[p.i]
+      const harga = p.tiket.harga!
+      const subtotal1 = harga * p.qty
+      const extraSubtotal = p.extra ? p.extra.harga! * p.qty : 0
+      const total = subtotal1 + extraSubtotal
+      const items: any[] = [{ tiketId: p.tiket.id, qty: p.qty, harga, subtotal: subtotal1 }]
+      if (p.extra) items.push({ tiketId: p.extra.id, qty: p.qty, harga: p.extra.harga!, subtotal: extraSubtotal })
+
       return prisma.pesanan.create({
         data: {
           tenantId,
           userId: demoUser.id,
-          kode: `WIS-DEMO-${String(i + 1).padStart(3, '0')}`,
-          namaPemesan: p.nama,
-          emailPemesan: p.email,
-          noHpPemesan: p.noHp,
-          tglKunjungan: randomDate(7),
-          total: totalHarga,
-          status: i < 3 ? 'DIBAYAR' : 'MENUNGGU',
-          items: {
-            create: [{ tiketId: tiketMasuk.id, qty: p.jumlah, harga: tiketMasuk.harga!, subtotal: tiketMasuk.harga! * p.jumlah }],
-          },
+          kode: `WIS-DEMO-${String(p.i + 1).padStart(3, '0')}`,
+          namaPemesan: pemesan.nama,
+          emailPemesan: pemesan.email,
+          noHpPemesan: pemesan.noHp,
+          tglKunjungan: dateOffset(p.daysBack),
+          total,
+          status: p.status,
+          items: { create: items },
         },
       })
     })
