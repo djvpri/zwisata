@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { useSession } from 'next-auth/react'
 
 interface Tiket {
   id: string
@@ -49,7 +50,11 @@ const NEXT_STATUS: Record<string, { label: string; status: string; style: string
 
 const inputCls = 'w-full px-3 py-2.5 border rounded-lg bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30'
 
+const VALID_STATUSES = new Set(['MENUNGGU', 'DIBAYAR', 'DIPAKAI', 'SELESAI', 'DIBATALKAN'])
+
 export default function PesananPage() {
+  const { data: session } = useSession()
+  const isAdmin = (session?.user as any)?.role === 'ADMIN'
   const [pesanan, setPesanan] = useState<Pesanan[]>([])
   const [tiketList, setTiketList] = useState<Tiket[]>([])
   const [showForm, setShowForm] = useState(false)
@@ -100,6 +105,17 @@ export default function PesananPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
       })
+      loadPesanan(filterTgl || undefined)
+    } finally {
+      setUpdatingId(null)
+    }
+  }
+
+  const hapusPesanan = async (id: string) => {
+    if (!confirm('Hapus pesanan ini secara permanen?')) return
+    setUpdatingId(id)
+    try {
+      await fetch(`/api/pesanan/${id}`, { method: 'DELETE' })
       loadPesanan(filterTgl || undefined)
     } finally {
       setUpdatingId(null)
@@ -307,6 +323,8 @@ export default function PesananPage() {
         {pesanan.map(p => {
           const nextAction = NEXT_STATUS[p.status]
           const canCancel = p.status === 'MENUNGGU' || p.status === 'DIBAYAR'
+          const isInvalidStatus = !VALID_STATUSES.has(p.status)
+          const canDelete = isAdmin && (p.status === 'DIBATALKAN' || isInvalidStatus)
           const isUpdating = updatingId === p.id
 
           return (
@@ -331,8 +349,8 @@ export default function PesananPage() {
                 <p className="text-sm font-bold shrink-0">Rp{p.total.toLocaleString()}</p>
               </div>
 
-              {/* Tombol aksi status */}
-              {(nextAction || canCancel) && (
+              {/* Tombol aksi */}
+              {(nextAction || canCancel || canDelete) && (
                 <div className="flex items-center gap-2 pt-2 border-t">
                   {nextAction && (
                     <button
@@ -347,9 +365,18 @@ export default function PesananPage() {
                     <button
                       onClick={() => ubahStatus(p.id, 'DIBATALKAN')}
                       disabled={isUpdating}
-                      className="px-3 py-1.5 rounded-lg text-xs font-medium border text-destructive hover:bg-red-50 transition-colors disabled:opacity-50 ml-auto"
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium border text-destructive hover:bg-red-50 transition-colors disabled:opacity-50"
                     >
                       Batalkan
+                    </button>
+                  )}
+                  {canDelete && (
+                    <button
+                      onClick={() => hapusPesanan(p.id)}
+                      disabled={isUpdating}
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium border border-destructive text-destructive hover:bg-red-50 transition-colors disabled:opacity-50 ml-auto"
+                    >
+                      {isUpdating ? '...' : 'Hapus'}
                     </button>
                   )}
                 </div>
