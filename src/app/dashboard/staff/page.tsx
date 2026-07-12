@@ -19,46 +19,74 @@ export default function StaffPage() {
 
   const isAdmin = (session?.user as any)?.role === 'ADMIN'
 
+  const inputCls = 'w-full px-3 py-2.5 border rounded-lg bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30'
+
   return (
-    <div className="min-h-screen">
-      <header className="border-b px-4 py-3 bg-card flex items-center justify-between sticky top-0 z-20">
-        <a href="/dashboard" className="flex items-center gap-2 font-bold text-lg"><i className="bi bi-signpost-split"></i> ZWisata</a>
-        <span className="text-sm text-muted-foreground">Staff</span>
-      </header>
-      <main className="max-w-4xl mx-auto px-4 py-6">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl font-bold">Staff</h1>
-          {isAdmin && <button onClick={() => setShowForm(!showForm)} className="px-4 py-2 bg-primary text-white rounded-xl text-sm font-semibold">{showForm ? 'Batal' : '+ Staff'}</button>}
-        </div>
-        {showForm && (
-          <form onSubmit={handleSubmit} className="border rounded-xl p-4 mb-6 space-y-3 bg-card">
-            <input value={form.nama} onChange={e => setForm({ ...form, nama: e.target.value })} placeholder="Nama" className="w-full px-3 py-2 border rounded-lg bg-background" required />
-            <div className="grid grid-cols-2 gap-3">
-              <input value={form.nip} onChange={e => setForm({ ...form, nip: e.target.value })} placeholder="NIP" className="px-3 py-2 border rounded-lg bg-background" />
-              <input value={form.noHp} onChange={e => setForm({ ...form, noHp: e.target.value })} placeholder="No HP" className="px-3 py-2 border rounded-lg bg-background" />
+    <div className="max-w-4xl">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Staff</h1>
+        {isAdmin && (
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="px-4 py-2 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary-hover transition-colors"
+          >
+            {showForm ? 'Batal' : '+ Staff'}
+          </button>
+        )}
+      </div>
+
+      {showForm && (
+        <form onSubmit={handleSubmit} className="border rounded-xl p-5 mb-6 space-y-3 bg-card">
+          <input value={form.nama} onChange={e => setForm({ ...form, nama: e.target.value })} placeholder="Nama lengkap" className={inputCls} required />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">NIP (opsional)</label>
+              <input value={form.nip} onChange={e => setForm({ ...form, nip: e.target.value })} placeholder="—" className={inputCls} />
             </div>
-            <select value={form.posisi} onChange={e => setForm({ ...form, posisi: e.target.value })} className="w-full px-3 py-2 border rounded-lg bg-background">
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">No HP</label>
+              <input value={form.noHp} onChange={e => setForm({ ...form, noHp: e.target.value })} placeholder="08xx" className={inputCls} />
+            </div>
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground mb-1 block">Posisi</label>
+            <select value={form.posisi} onChange={e => setForm({ ...form, posisi: e.target.value })} className={inputCls}>
               <option value="OPERATOR">Operator</option>
               <option value="TICKETING">Ticketing</option>
               <option value="KEBERSIHAN">Kebersihan</option>
               <option value="SUPERVISOR">Supervisor</option>
             </select>
-            <button type="submit" className="px-4 py-2 bg-primary text-white rounded-xl text-sm">Simpan</button>
-          </form>
-        )}
-        <div className="space-y-3">
-          {staff.map(s => (
-            <div key={s.id} className="border rounded-xl p-4 flex items-center justify-between bg-card">
-              <div>
-                <div className="font-semibold">{s.nama}</div>
-                <div className="text-xs text-muted-foreground">{s.posisi}{s.nip ? ' · ' + s.nip : ''}</div>
+          </div>
+          <button type="submit" className="px-5 py-2 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary-hover transition-colors">
+            Simpan
+          </button>
+        </form>
+      )}
+
+      <div className="space-y-2">
+        {staff.map(s => (
+          <div key={s.id} className="border rounded-xl p-4 flex items-center justify-between bg-card">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center text-sm font-bold text-muted-foreground shrink-0">
+                {s.nama.charAt(0).toUpperCase()}
               </div>
-              <span className={`text-xs px-2 py-0.5 rounded-full ${s.aktif ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{s.aktif ? 'Aktif' : 'Nonaktif'}</span>
+              <div>
+                <p className="font-semibold text-sm">{s.nama}</p>
+                <p className="text-xs text-muted-foreground">{s.posisi}{s.nip ? ` · ${s.nip}` : ''}</p>
+              </div>
             </div>
-          ))}
-          {staff.length === 0 && <p className="text-center text-muted-foreground py-8">Belum ada staff</p>}
-        </div>
-      </main>
+            <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${s.aktif ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+              {s.aktif ? 'Aktif' : 'Nonaktif'}
+            </span>
+          </div>
+        ))}
+        {staff.length === 0 && (
+          <div className="text-center py-12 text-muted-foreground">
+            <i className="bi bi-people text-3xl mb-3 block opacity-40" />
+            <p className="text-sm">Belum ada staff terdaftar.</p>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

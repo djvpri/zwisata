@@ -2,34 +2,41 @@
 @import "bootstrap-icons/font/bootstrap-icons.css";
 
 @theme {
-  --color-background: #ffffff;
-  --color-foreground: #0b1220;
-  --color-card: #ffffff;
-  --color-border: #e2e8f0;
-  --color-primary: #0d53e7;
-  --color-primary-hover: #0a44b9;
-  --color-muted: #f1f5f9;
-  --color-muted-foreground: #64748b;
-  --color-destructive: #ef4444;
+  /* Typography */
+  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
 
-  /* Token landing page — dunia karcis taman wisata */
-  --color-paper: #faf7ef;
-  --color-ink: #17352c;
-  --color-karcis: #ffc93c;
-  --color-garis: #dad5c4;
-  --color-daun: #1f7a53;
+  /* Primary — Teal */
+  --color-primary: #0F766E;
+  --color-primary-hover: #115E59;
+  --color-primary-foreground: #FFFFFF;
+
+  /* Semantic surfaces */
+  --color-background: #F8FAFC;
+  --color-foreground: #0F172A;
+  --color-card: #FFFFFF;
+  --color-card-foreground: #0F172A;
+  --color-border: #E2E8F0;
+  --color-muted: #F1F5F9;
+  --color-muted-foreground: #64748B;
+  --color-destructive: #EF4444;
+  --color-ring: #0F766E;
+
+  /* Landing page tokens */
+  --color-paper: #FAFAF9;
+  --color-ink: #1C1917;
+  --color-karcis: #FDE68A;
+  --color-garis: #E7E5E4;
+  --color-daun: #0F766E;
 }
 
-/* Shim migrasi v4: kembalikan warna border default seperti v3 */
 @layer base {
-  *,
-  ::before,
-  ::after {
+  *, ::before, ::after {
     border-color: var(--color-border);
   }
-}
-
-body {
-  background: var(--color-background);
-  color: var(--color-foreground);
+  body {
+    background: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
 }

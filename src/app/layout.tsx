@@ -1,10 +1,9 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
-import 'bootstrap-icons/font/bootstrap-icons.css'
 import { Providers } from './providers'
 
-const inter = Inter({ subsets: ['latin'] })
+const jakarta = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-sans' })
 
 export const metadata: Metadata = {
   title: 'ZWisata — Sistem Membership Taman Wisata',
@@ -13,8 +12,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="id">
-      <body className={inter.className}>
+    <html lang="id" className={jakarta.variable}>
+      <body>
         <Providers>{children}</Providers>
       </body>
     </html>

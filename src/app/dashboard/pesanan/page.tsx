@@ -11,27 +11,26 @@ export default function PesananPage() {
   }
 
   return (
-    <div className="min-h-screen">
-      <header className="border-b px-4 py-3 bg-card flex items-center justify-between sticky top-0 z-20">
-        <a href="/dashboard" className="flex items-center gap-2 font-bold text-lg"><i className="bi bi-signpost-split"></i> ZWisata</a>
-        <span className="text-sm text-muted-foreground">Pesanan</span>
-      </header>
-      <main className="max-w-4xl mx-auto px-4 py-6">
-        <h1 className="text-xl font-bold mb-4">Pesanan</h1>
-        <div className="space-y-3">
-          {pesanan.map(p => (
-            <div key={p.id} className="border rounded-xl p-4 bg-card">
-              <div className="flex items-center justify-between mb-1">
-                <span className="font-semibold">#{p.kode}</span>
-                <span className={`text-xs px-2 py-0.5 rounded-full ${statusColor(p.status)}`}>{p.status}</span>
-              </div>
-              <div className="text-sm text-muted-foreground">{p.namaPemesan} · {new Date(p.tglKunjungan).toLocaleDateString('id-ID')}</div>
-              <div className="text-sm font-semibold mt-1">Rp{p.total.toLocaleString()} · {p.items?.length || 0} tiket</div>
+    <div className="max-w-4xl">
+      <h1 className="text-2xl font-bold mb-6">Pesanan</h1>
+      <div className="space-y-2">
+        {pesanan.map(p => (
+          <div key={p.id} className="border rounded-xl p-4 bg-card">
+            <div className="flex items-center justify-between mb-1">
+              <span className="font-semibold text-sm">#{p.kode}</span>
+              <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${statusColor(p.status)}`}>{p.status}</span>
             </div>
-          ))}
-          {pesanan.length === 0 && <p className="text-center text-muted-foreground py-8">Belum ada pesanan</p>}
-        </div>
-      </main>
+            <p className="text-sm text-muted-foreground">{p.namaPemesan} · {new Date(p.tglKunjungan).toLocaleDateString('id-ID')}</p>
+            <p className="text-sm font-semibold mt-1">Rp{p.total.toLocaleString()} · {p.items?.length || 0} tiket</p>
+          </div>
+        ))}
+        {pesanan.length === 0 && (
+          <div className="text-center py-12 text-muted-foreground">
+            <i className="bi bi-clipboard-data text-3xl mb-3 block opacity-40" />
+            <p className="text-sm">Belum ada pesanan masuk.</p>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

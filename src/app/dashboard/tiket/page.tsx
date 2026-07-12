@@ -25,52 +25,81 @@ export default function TiketPage() {
 
   const isAdmin = (session?.user as any)?.role === 'ADMIN'
 
+  const inputCls = 'w-full px-3 py-2.5 border rounded-lg bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30'
+
   return (
-    <div className="min-h-screen">
-      <header className="border-b px-4 py-3 bg-card flex items-center justify-between sticky top-0 z-20">
-        <a href="/dashboard" className="flex items-center gap-2 font-bold text-lg"><i className="bi bi-signpost-split"></i> ZWisata</a>
-        <span className="text-sm text-muted-foreground">Tiket</span>
-      </header>
-      <main className="max-w-4xl mx-auto px-4 py-6">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl font-bold">Tiket</h1>
-          {isAdmin && <button onClick={() => setShowForm(!showForm)} className="px-4 py-2 bg-primary text-white rounded-xl text-sm font-semibold">{showForm ? 'Batal' : '+ Tiket'}</button>}
-        </div>
-        {showForm && (
-          <form onSubmit={handleSubmit} className="border rounded-xl p-4 mb-6 space-y-3 bg-card">
-            <input value={form.nama} onChange={e => setForm({ ...form, nama: e.target.value })} placeholder="Nama tiket" className="w-full px-3 py-2 border rounded-lg bg-background" required />
-            <textarea value={form.deskripsi} onChange={e => setForm({ ...form, deskripsi: e.target.value })} placeholder="Deskripsi" className="w-full px-3 py-2 border rounded-lg bg-background" />
-            <div className="grid grid-cols-2 gap-3">
-              <select value={form.tipe} onChange={e => setForm({ ...form, tipe: e.target.value })} className="px-3 py-2 border rounded-lg bg-background">
+    <div className="max-w-4xl">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Tiket</h1>
+        {isAdmin && (
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="px-4 py-2 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary-hover transition-colors"
+          >
+            {showForm ? 'Batal' : '+ Tiket'}
+          </button>
+        )}
+      </div>
+
+      {showForm && (
+        <form onSubmit={handleSubmit} className="border rounded-xl p-5 mb-6 space-y-3 bg-card">
+          <input value={form.nama} onChange={e => setForm({ ...form, nama: e.target.value })} placeholder="Nama tiket" className={inputCls} required />
+          <textarea value={form.deskripsi} onChange={e => setForm({ ...form, deskripsi: e.target.value })} placeholder="Deskripsi (opsional)" rows={2} className={`${inputCls} resize-none`} />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">Tipe</label>
+              <select value={form.tipe} onChange={e => setForm({ ...form, tipe: e.target.value })} className={inputCls}>
                 <option value="MASUK">Masuk</option>
                 <option value="WAHANA">Per Wahana</option>
                 <option value="COMBO">Paket Combo</option>
               </select>
-              <input type="number" value={form.harga} onChange={e => setForm({ ...form, harga: e.target.value })} placeholder="Harga (Rp)" className="px-3 py-2 border rounded-lg bg-background" required />
             </div>
-            {form.tipe === 'WAHANA' && (
-              <select value={form.wahanaId} onChange={e => setForm({ ...form, wahanaId: e.target.value })} className="w-full px-3 py-2 border rounded-lg bg-background">
-                <option value="">Pilih wahana</option>
-                {wahana.map(w => <option key={w.id} value={w.id}>{w.nama}</option>)}
-              </select>
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">Harga (Rp)</label>
+              <input type="number" value={form.harga} onChange={e => setForm({ ...form, harga: e.target.value })} placeholder="0" className={inputCls} required />
+            </div>
+          </div>
+          {form.tipe === 'WAHANA' && (
+            <select value={form.wahanaId} onChange={e => setForm({ ...form, wahanaId: e.target.value })} className={inputCls}>
+              <option value="">Pilih wahana</option>
+              {wahana.map(w => <option key={w.id} value={w.id}>{w.nama}</option>)}
+            </select>
+          )}
+          <div>
+            <label className="text-xs text-muted-foreground mb-1 block">Kuota harian (opsional)</label>
+            <input type="number" value={form.kuotaHarian} onChange={e => setForm({ ...form, kuotaHarian: e.target.value })} placeholder="Kosongkan = tidak terbatas" className={inputCls} />
+          </div>
+          <button type="submit" className="px-5 py-2 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary-hover transition-colors">
+            Simpan
+          </button>
+        </form>
+      )}
+
+      <div className="space-y-2">
+        {tiket.map(t => (
+          <div key={t.id} className="border rounded-xl p-4 flex items-center justify-between bg-card">
+            <div className="min-w-0">
+              <p className="font-semibold text-sm">{t.nama}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {t.tipe} · Rp{t.harga.toLocaleString()}
+                {t.wahana ? ` · ${t.wahana.nama}` : ''}
+                {t.kuotaHarian ? ` · Kuota ${t.kuotaHarian}/hari` : ''}
+              </p>
+            </div>
+            {isAdmin && (
+              <button onClick={() => hapus(t.id)} className="text-xs px-2.5 py-1 border rounded-lg text-destructive hover:bg-muted transition-colors ml-4 shrink-0">
+                Hapus
+              </button>
             )}
-            <input type="number" value={form.kuotaHarian} onChange={e => setForm({ ...form, kuotaHarian: e.target.value })} placeholder="Kuota harian (opsional)" className="w-full px-3 py-2 border rounded-lg bg-background" />
-            <button type="submit" className="px-4 py-2 bg-primary text-white rounded-xl text-sm">Simpan</button>
-          </form>
+          </div>
+        ))}
+        {tiket.length === 0 && (
+          <div className="text-center py-12 text-muted-foreground">
+            <i className="bi bi-ticket-perforated text-3xl mb-3 block opacity-40" />
+            <p className="text-sm">Belum ada tiket. Tambah tiket pertama.</p>
+          </div>
         )}
-        <div className="space-y-3">
-          {tiket.map(t => (
-            <div key={t.id} className="border rounded-xl p-4 flex items-center justify-between bg-card">
-              <div>
-                <div className="font-semibold">{t.nama}</div>
-                <div className="text-xs text-muted-foreground">{t.tipe} · Rp{t.harga.toLocaleString()} {t.wahana && '· ' + t.wahana.nama}{t.kuotaHarian && ' · Kuota: ' + t.kuotaHarian + '/hari'}</div>
-              </div>
-              {isAdmin && <button onClick={() => hapus(t.id)} className="text-xs px-2 py-1 border rounded-lg text-destructive hover:bg-muted">Hapus</button>}
-            </div>
-          ))}
-          {tiket.length === 0 && <p className="text-center text-muted-foreground py-8">Belum ada tiket</p>}
-        </div>
-      </main>
+      </div>
     </div>
   )
 }

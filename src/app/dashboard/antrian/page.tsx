@@ -27,34 +27,58 @@ export default function AntrianPage() {
   const isAdmin = (session?.user as any)?.role === 'ADMIN'
 
   return (
-    <div className="min-h-screen">
-      <header className="border-b px-4 py-3 bg-card flex items-center justify-between sticky top-0 z-20">
-        <a href="/dashboard" className="flex items-center gap-2 font-bold text-lg"><i className="bi bi-signpost-split"></i> ZWisata</a>
-        <span className="text-sm text-muted-foreground">Antrian</span>
-      </header>
-      <main className="max-w-4xl mx-auto px-4 py-6">
-        <h1 className="text-xl font-bold mb-4">Antrian Realtime</h1>
-        <select value={wahanaId} onChange={e => setWahanaId(e.target.value)} className="mb-4 px-3 py-2 border rounded-xl bg-card w-full sm:w-64">
-          <option value="">Semua wahana</option>
-          {wahana.map(w => <option key={w.id} value={w.id}>{w.nama}</option>)}
-        </select>
-        <div className="space-y-3">
-          {antrian.map(a => (
-            <div key={a.id} className="border rounded-xl p-4 flex items-center justify-between bg-card">
-              <div>
-                <div className="font-semibold text-lg">#{a.noAntrian} — {a.namaPengunjung}</div>
-                <div className="text-xs text-muted-foreground">{a.wahana?.nama} · Estimasi {a.estimasi} menit</div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className={`text-xs px-2 py-0.5 rounded-full ${a.status === 'MENUNGGU' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>{a.status}</span>
-                {isAdmin && a.status === 'MENUNGGU' && <button onClick={() => panggil(a.id)} className="text-xs px-2 py-1 border rounded-lg hover:bg-muted">Panggil</button>}
-                {isAdmin && a.status !== 'SELESAI' && <button onClick={() => selesai(a.id)} className="text-xs px-2 py-1 border rounded-lg text-green-600 hover:bg-muted">✓</button>}
-              </div>
+    <div className="max-w-4xl">
+      <div className="flex items-center justify-between mb-5">
+        <h1 className="text-2xl font-bold">Antrian Realtime</h1>
+        <button onClick={load} className="p-2 rounded-lg hover:bg-muted transition-colors" aria-label="Refresh">
+          <i className="bi bi-arrow-clockwise text-lg" />
+        </button>
+      </div>
+
+      <select
+        value={wahanaId}
+        onChange={e => setWahanaId(e.target.value)}
+        className="mb-4 px-3 py-2.5 border rounded-xl bg-card text-sm w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-primary/30"
+      >
+        <option value="">Semua wahana</option>
+        {wahana.map(w => <option key={w.id} value={w.id}>{w.nama}</option>)}
+      </select>
+
+      <div className="space-y-2">
+        {antrian.map(a => (
+          <div key={a.id} className="border rounded-xl p-4 flex items-center justify-between bg-card">
+            <div>
+              <p className="font-bold text-lg">#{a.noAntrian} <span className="font-semibold text-base">— {a.namaPengunjung}</span></p>
+              <p className="text-xs text-muted-foreground mt-0.5">{a.wahana?.nama} · Estimasi {a.estimasi} menit</p>
             </div>
-          ))}
-          {antrian.length === 0 && <p className="text-center text-muted-foreground py-8">Tidak ada antrian</p>}
-        </div>
-      </main>
+            <div className="flex items-center gap-2 shrink-0 ml-4">
+              <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${
+                a.status === 'MENUNGGU' ? 'bg-blue-100 text-blue-700'
+                : a.status === 'DIPANGGIL' ? 'bg-purple-100 text-purple-700'
+                : 'bg-green-100 text-green-700'
+              }`}>
+                {a.status}
+              </span>
+              {isAdmin && a.status === 'MENUNGGU' && (
+                <button onClick={() => panggil(a.id)} className="text-xs px-2.5 py-1 border rounded-lg hover:bg-muted transition-colors">
+                  Panggil
+                </button>
+              )}
+              {isAdmin && a.status !== 'SELESAI' && (
+                <button onClick={() => selesai(a.id)} className="text-xs px-2.5 py-1 border rounded-lg text-green-600 hover:bg-muted transition-colors">
+                  ✓ Selesai
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+        {antrian.length === 0 && (
+          <div className="text-center py-12 text-muted-foreground">
+            <i className="bi bi-arrow-repeat text-3xl mb-3 block opacity-40" />
+            <p className="text-sm">Tidak ada antrian aktif.</p>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
