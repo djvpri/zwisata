@@ -54,6 +54,19 @@ export async function GET(req: NextRequest) {
     tiket: Object.values(h.tiket),
   }))
 
+  // Agregasi per tiket (seluruh periode)
+  const perTiketMap: Record<string, { nama: string; qty: number; pendapatan: number; pesanan: number }> = {}
+  for (const p of pesanan) {
+    for (const item of p.items) {
+      const nama = item.tiket.nama
+      if (!perTiketMap[nama]) perTiketMap[nama] = { nama, qty: 0, pendapatan: 0, pesanan: 0 }
+      perTiketMap[nama].qty += item.qty
+      perTiketMap[nama].pendapatan += item.subtotal
+      perTiketMap[nama].pesanan += 1
+    }
+  }
+  const perTiket = Object.values(perTiketMap).sort((a, b) => b.pendapatan - a.pendapatan)
+
   const totalPendapatan = harian.reduce((s, h) => s + h.pendapatan, 0)
   const totalPesanan = harian.reduce((s, h) => s + h.pesanan, 0)
   const jumlahHariAktif = harian.length
@@ -66,5 +79,6 @@ export async function GET(req: NextRequest) {
       jumlahHariAktif,
     },
     harian,
+    perTiket,
   })
 }
