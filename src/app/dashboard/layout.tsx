@@ -12,6 +12,7 @@ const NAV = [
   { href: '/dashboard/pesanan', label: 'Pesanan', icon: 'bi-clipboard-data' },
   { href: '/dashboard/antrian', label: 'Antrian', icon: 'bi-arrow-repeat' },
   { href: '/dashboard/staff', label: 'Staff', icon: 'bi-people' },
+  { href: '/dashboard/laporan', label: 'Laporan', icon: 'bi-bar-chart-line' },
 ]
 
 function Sidebar({ onClose }: { onClose?: () => void }) {
