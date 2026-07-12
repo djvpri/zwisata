@@ -40,6 +40,13 @@ const STATUS_COLOR: Record<string, string> = {
   DIBATALKAN: 'bg-red-100 text-red-700',
 }
 
+// Status berikutnya dalam alur normal
+const NEXT_STATUS: Record<string, { label: string; status: string; style: string }> = {
+  MENUNGGU: { label: 'Konfirmasi Bayar', status: 'DIBAYAR', style: 'bg-primary text-white hover:bg-primary-hover' },
+  DIBAYAR:  { label: 'Tandai Dipakai',   status: 'DIPAKAI', style: 'bg-purple-600 text-white hover:bg-purple-700' },
+  DIPAKAI:  { label: 'Selesai',           status: 'SELESAI', style: 'bg-green-600 text-white hover:bg-green-700' },
+}
+
 const inputCls = 'w-full px-3 py-2.5 border rounded-lg bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30'
 
 export default function PesananPage() {
@@ -50,6 +57,7 @@ export default function PesananPage() {
   const [sukses, setSukses] = useState('')
   const [error, setError] = useState('')
   const [filterTgl, setFilterTgl] = useState('')
+  const [updatingId, setUpdatingId] = useState<string | null>(null)
 
   // Form state
   const [nama, setNama] = useState('')
@@ -83,6 +91,20 @@ export default function PesananPage() {
 
   const updateCart = (idx: number, field: keyof CartItem, value: string | number) =>
     setCart(prev => prev.map((item, i) => i === idx ? { ...item, [field]: value } : item))
+
+  const ubahStatus = async (id: string, status: string) => {
+    setUpdatingId(id)
+    try {
+      await fetch(`/api/pesanan/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      })
+      loadPesanan(filterTgl || undefined)
+    } finally {
+      setUpdatingId(null)
+    }
+  }
 
   const resetForm = () => {
     setNama(''); setEmail(''); setNoHp(''); setTglKunjungan('')
@@ -282,29 +304,59 @@ export default function PesananPage() {
 
       {/* Daftar pesanan */}
       <div className="space-y-2">
-        {pesanan.map(p => (
-          <div key={p.id} className="border rounded-xl p-4 bg-card">
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <span className="font-semibold text-sm">#{p.kode}</span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLOR[p.status] ?? 'bg-gray-100 text-gray-700'}`}>
-                    {p.status}
-                  </span>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {p.namaPemesan} · {new Date(p.tglKunjungan).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
-                </p>
-                {p.items?.length > 0 && (
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {p.items.map(i => `${i.tiket.nama} ×${i.qty}`).join(', ')}
+        {pesanan.map(p => {
+          const nextAction = NEXT_STATUS[p.status]
+          const canCancel = p.status === 'MENUNGGU' || p.status === 'DIBAYAR'
+          const isUpdating = updatingId === p.id
+
+          return (
+            <div key={p.id} className="border rounded-xl p-4 bg-card">
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className="font-semibold text-sm">#{p.kode}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLOR[p.status] ?? 'bg-gray-100 text-gray-700'}`}>
+                      {p.status}
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {p.namaPemesan} · {new Date(p.tglKunjungan).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
                   </p>
-                )}
+                  {p.items?.length > 0 && (
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {p.items.map(i => `${i.tiket.nama} ×${i.qty}`).join(', ')}
+                    </p>
+                  )}
+                </div>
+                <p className="text-sm font-bold shrink-0">Rp{p.total.toLocaleString()}</p>
               </div>
-              <p className="text-sm font-bold shrink-0">Rp{p.total.toLocaleString()}</p>
+
+              {/* Tombol aksi status */}
+              {(nextAction || canCancel) && (
+                <div className="flex items-center gap-2 pt-2 border-t">
+                  {nextAction && (
+                    <button
+                      onClick={() => ubahStatus(p.id, nextAction.status)}
+                      disabled={isUpdating}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors disabled:opacity-50 ${nextAction.style}`}
+                    >
+                      {isUpdating ? '...' : nextAction.label}
+                    </button>
+                  )}
+                  {canCancel && (
+                    <button
+                      onClick={() => ubahStatus(p.id, 'DIBATALKAN')}
+                      disabled={isUpdating}
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium border text-destructive hover:bg-red-50 transition-colors disabled:opacity-50 ml-auto"
+                    >
+                      Batalkan
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
-          </div>
-        ))}
+          )
+        })}
         {pesanan.length === 0 && (
           <div className="text-center py-12 text-muted-foreground">
             <i className="bi bi-clipboard-data text-3xl mb-3 block opacity-40" />
