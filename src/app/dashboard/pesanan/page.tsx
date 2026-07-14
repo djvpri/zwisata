@@ -68,8 +68,11 @@ export default function PesananPage() {
   const [nama, setNama] = useState('')
   const [email, setEmail] = useState('')
   const [noHp, setNoHp] = useState('')
-  const [tglKunjungan, setTglKunjungan] = useState('')
+  const [tglKunjungan, setTglKunjungan] = useState(() => new Date().toLocaleDateString('en-CA'))
   const [cart, setCart] = useState<CartItem[]>([{ tiketId: '', qty: 1 }])
+
+  // Tanggal hari ini (lokal, format YYYY-MM-DD) untuk default & batas minimum
+  const today = new Date().toLocaleDateString('en-CA')
 
   const loadPesanan = (tgl?: string) => {
     const url = tgl ? `/api/pesanan?tgl=${tgl}` : '/api/pesanan'
@@ -123,7 +126,7 @@ export default function PesananPage() {
   }
 
   const resetForm = () => {
-    setNama(''); setEmail(''); setNoHp(''); setTglKunjungan('')
+    setNama(''); setEmail(''); setNoHp(''); setTglKunjungan(new Date().toLocaleDateString('en-CA'))
     setCart([{ tiketId: '', qty: 1 }])
     setError('')
   }
@@ -142,7 +145,7 @@ export default function PesananPage() {
       const res = await fetch('/api/pesanan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ namaPemesan: nama, emailPemesan: email, noHpPemesan: noHp, tglKunjungan, total, items }),
+        body: JSON.stringify({ namaPemesan: nama.trim() || 'Umum', emailPemesan: email, noHpPemesan: noHp, tglKunjungan, total, items }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Gagal membuat pesanan')
@@ -184,17 +187,18 @@ export default function PesananPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Nama Pemesan <span className="text-destructive">*</span></label>
+              <label className="text-xs text-muted-foreground mb-1 block">Nama Pemesan <span className="text-muted-foreground font-normal">(opsional)</span></label>
               <input
                 value={nama} onChange={e => setNama(e.target.value)}
-                placeholder="Budi Santoso"
-                className={inputCls} required
+                placeholder="Umum"
+                className={inputCls}
               />
             </div>
             <div>
               <label className="text-xs text-muted-foreground mb-1 block">Tanggal Kunjungan <span className="text-destructive">*</span></label>
               <input
                 type="date" value={tglKunjungan} onChange={e => setTglKunjungan(e.target.value)}
+                min={today}
                 className={inputCls} required
               />
             </div>
