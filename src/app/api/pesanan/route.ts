@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
   }
   const pesanan = await prisma.pesanan.findMany({
     where,
-    include: { items: { include: { tiket: true } }, user: { select: { id: true, name: true, email: true } } },
+    include: { items: { include: { tiket: true } }, user: { select: { id: true, name: true, email: true } }, tenant: { select: { name: true } } },
     orderBy: { createdAt: 'desc' },
   })
   return NextResponse.json(pesanan)

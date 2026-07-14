@@ -26,6 +26,68 @@ interface Pesanan {
   total: number
   status: string
   items: PesananItem[]
+  tenant?: { name: string } | null
+}
+
+function escapeHtml(s: string) {
+  return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+
+// Cetak lewat iframe tersembunyi — dokumen struk terisolasi (andal di modal/PWA)
+function printSlip(html: string) {
+  const iframe = document.createElement('iframe')
+  iframe.setAttribute('aria-hidden', 'true')
+  iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;'
+  document.body.appendChild(iframe)
+  const win = iframe.contentWindow
+  const doc = win?.document
+  if (!win || !doc) { document.body.removeChild(iframe); window.print(); return }
+  let done = false
+  const finish = () => { if (done) return; done = true; setTimeout(() => { try { document.body.removeChild(iframe) } catch {} }, 300) }
+  doc.open(); doc.write(html); doc.close()
+  win.onafterprint = finish
+  setTimeout(() => {
+    try { win.focus(); win.print() } catch { window.print() }
+    setTimeout(finish, 2000)
+  }, 200)
+}
+
+// Slip tiket thermal 58mm — kode besar untuk ditunjukkan di gerbang
+function cetakTiket(p: Pesanan) {
+  const wisata = p.tenant?.name || 'ZWisata'
+  const tgl = new Date(p.tglKunjungan).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+  const rows = p.items.map(it =>
+    `<div class="row"><span>${escapeHtml(it.tiket.nama)} &times;${it.qty}</span><span>Rp${it.subtotal.toLocaleString('id-ID')}</span></div>`
+  ).join('')
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>Tiket ${escapeHtml(p.kode)}</title><style>
+@page{size:58mm auto;margin:0}
+*{box-sizing:border-box}
+body{margin:0;padding:3mm 3.5mm;width:58mm;font-family:'Courier New',Courier,monospace;color:#000;font-size:11px;line-height:1.35}
+.c{text-align:center}.b{font-weight:bold}
+.lg{font-size:15px}.xl{font-size:22px;letter-spacing:2px}
+.muted{font-size:10px}
+hr{border:0;border-top:1px dashed #000;margin:6px 0}
+.row{display:flex;justify-content:space-between;gap:8px}
+.box{border:1.5px solid #000;border-radius:6px;padding:6px;text-align:center;margin-top:6px}
+</style></head><body>
+<div class="c b lg">${escapeHtml(wisata)}</div>
+<div class="c muted">TIKET KUNJUNGAN</div>
+<hr>
+<div class="row"><span>Kode</span><span class="b">${escapeHtml(p.kode)}</span></div>
+<div class="row"><span>Tanggal</span><span>${tgl}</span></div>
+<div class="row"><span>Pemesan</span><span>${escapeHtml(p.namaPemesan || 'Umum')}</span></div>
+<div class="row"><span>Status</span><span>${escapeHtml(p.status)}</span></div>
+<hr>
+${rows}
+<hr>
+<div class="row b"><span>TOTAL</span><span>Rp${p.total.toLocaleString('id-ID')}</span></div>
+<div class="box">
+<div class="muted">Tunjukkan kode ini di gerbang</div>
+<div class="xl b">${escapeHtml(p.kode)}</div>
+</div>
+<div class="c muted" style="margin-top:8px">Terima kasih atas kunjungan Anda</div>
+</body></html>`
+  printSlip(html)
 }
 
 interface CartItem {
@@ -354,8 +416,16 @@ export default function PesananPage() {
               </div>
 
               {/* Tombol aksi */}
-              {(nextAction || canCancel || canDelete) && (
+              {(!isInvalidStatus || canDelete) && (
                 <div className="flex items-center gap-2 pt-2 border-t">
+                  {!isInvalidStatus && (
+                    <button
+                      onClick={() => cetakTiket(p)}
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium border border-primary/30 text-primary hover:bg-primary/10 transition-colors"
+                    >
+                      <i className="bi bi-printer mr-1" />Cetak
+                    </button>
+                  )}
                   {nextAction && (
                     <button
                       onClick={() => ubahStatus(p.id, nextAction.status)}
