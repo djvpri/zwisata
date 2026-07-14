@@ -1,9 +1,8 @@
 'use client'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
-import { useCallback } from 'react'
 
 const MENU = [
   { href: '/dashboard/wahana', label: 'Wahana', desc: 'Kelola wahana', icon: 'bi-signpost-split', color: 'text-teal-600' },
@@ -17,8 +16,9 @@ export default function Dashboard() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [stats, setStats] = useState({ wahana: 0, tiket: 0, pesanan: 0 })
-  const [seeding, setSeeding] = useState(false)
-  const [seedMsg, setSeedMsg] = useState('')
+  const [isDemo, setIsDemo] = useState(false)
+  const [resetting, setResetting] = useState(false)
+  const [resetMsg, setResetMsg] = useState('')
 
   const loadStats = useCallback(() => {
     Promise.all([
@@ -32,26 +32,35 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (status === 'unauthenticated') router.push('/login')
-    if (status === 'authenticated') loadStats()
+    if (status === 'authenticated') {
+      loadStats()
+      fetch('/api/tenant').then(r => r.json()).then(d => setIsDemo(!!d.isDemo))
+    }
   }, [status, router, loadStats])
 
-  const handleSeed = async () => {
-    if (!confirm('Ini akan menghapus semua data (wahana, tiket, staff, pesanan) dan mengisinya ulang dengan data demo. Lanjutkan?')) return
-    setSeeding(true)
-    setSeedMsg('')
+  const handleReset = async (endpoint: string) => {
+    const msg = endpoint === '/api/demo/reset'
+      ? 'Reset data demo ke kondisi awal? Semua perubahan akan hilang.'
+      : 'Isi ulang dengan data contoh? Data lama akan dihapus.'
+    if (!confirm(msg)) return
+
+    setResetting(true)
+    setResetMsg('')
     try {
-      const res = await fetch('/api/demo/seed-tenant', { method: 'POST' })
+      const res = await fetch(endpoint, { method: 'POST' })
       const data = await res.json()
-      if (data.success) {
-        setSeedMsg(`Berhasil: ${data.wahanas} wahana, ${data.tikets} tiket, ${data.pesanans} pesanan`)
+      if (data.ok || data.success) {
+        setResetMsg(data.success
+          ? `Berhasil: ${data.wahanas} wahana, ${data.tikets} tiket, ${data.pesanans} pesanan`
+          : 'Data demo berhasil direset.')
         loadStats()
       } else {
-        setSeedMsg(`Gagal: ${data.error}`)
+        setResetMsg(`Gagal: ${data.error}`)
       }
     } catch {
-      setSeedMsg('Terjadi kesalahan')
+      setResetMsg('Terjadi kesalahan')
     } finally {
-      setSeeding(false)
+      setResetting(false)
     }
   }
 
@@ -104,21 +113,44 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Demo seed */}
-      {user.role === 'ADMIN' && (
+      {/* Demo controls */}
+      {(isDemo || user.role === 'ADMIN') && (
         <div className="mt-8 pt-6 border-t border-dashed">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Data Demo</p>
-          <p className="text-xs text-muted-foreground mb-3">Isi ulang dengan data contoh untuk testing laporan dan fitur lainnya. <span className="text-amber-600 font-medium">Data lama akan dihapus.</span></p>
-          <button
-            onClick={handleSeed}
-            disabled={seeding}
-            className="px-4 py-2 rounded-lg bg-muted hover:bg-muted-foreground/10 border text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
-          >
-            <i className={`bi ${seeding ? 'bi-arrow-repeat animate-spin' : 'bi-database-fill-gear'} text-sm`} />
-            {seeding ? 'Mengisi data...' : 'Isi Data Demo'}
-          </button>
-          {seedMsg && (
-            <p className={`text-xs mt-2 ${seedMsg.startsWith('Berhasil') ? 'text-teal-600' : 'text-red-500'}`}>{seedMsg}</p>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+            {isDemo ? 'Akun Demo' : 'Data Demo'}
+          </p>
+          {isDemo ? (
+            <>
+              <p className="text-xs text-muted-foreground mb-3">
+                Ini adalah akun demo. Data dapat direset kapan saja ke kondisi awal.
+              </p>
+              <button
+                onClick={() => handleReset('/api/demo/reset')}
+                disabled={resetting}
+                className="px-4 py-2 rounded-lg bg-muted hover:bg-muted-foreground/10 border text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                <i className={`bi ${resetting ? 'bi-arrow-repeat animate-spin' : 'bi-arrow-counterclockwise'} text-sm`} />
+                {resetting ? 'Mereset...' : 'Reset Demo'}
+              </button>
+            </>
+          ) : (
+            <>
+              <p className="text-xs text-muted-foreground mb-3">
+                Isi ulang dengan data contoh untuk testing laporan dan fitur lainnya.{' '}
+                <span className="text-amber-600 font-medium">Data lama akan dihapus.</span>
+              </p>
+              <button
+                onClick={() => handleReset('/api/demo/seed-tenant')}
+                disabled={resetting}
+                className="px-4 py-2 rounded-lg bg-muted hover:bg-muted-foreground/10 border text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                <i className={`bi ${resetting ? 'bi-arrow-repeat animate-spin' : 'bi-database-fill-gear'} text-sm`} />
+                {resetting ? 'Mengisi data...' : 'Isi Data Demo'}
+              </button>
+            </>
+          )}
+          {resetMsg && (
+            <p className={`text-xs mt-2 ${resetMsg.includes('Gagal') ? 'text-red-500' : 'text-teal-600'}`}>{resetMsg}</p>
           )}
         </div>
       )}
