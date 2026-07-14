@@ -391,6 +391,7 @@ export default function PesananPage() {
           const canCancel = p.status === 'MENUNGGU' || p.status === 'DIBAYAR'
           const isInvalidStatus = !VALID_STATUSES.has(p.status)
           const canDelete = isAdmin && (p.status === 'DIBATALKAN' || isInvalidStatus)
+          const bisaCetak = p.status === 'DIBAYAR' || p.status === 'DIPAKAI' || p.status === 'SELESAI'
           const isUpdating = updatingId === p.id
 
           return (
@@ -416,9 +417,9 @@ export default function PesananPage() {
               </div>
 
               {/* Tombol aksi */}
-              {(!isInvalidStatus || canDelete) && (
+              {(bisaCetak || nextAction || canCancel || canDelete) && (
                 <div className="flex items-center gap-2 pt-2 border-t">
-                  {!isInvalidStatus && (
+                  {bisaCetak && (
                     <button
                       onClick={() => cetakTiket(p)}
                       className="px-3 py-1.5 rounded-lg text-xs font-medium border border-primary/30 text-primary hover:bg-primary/10 transition-colors"
